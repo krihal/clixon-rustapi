@@ -2,6 +2,7 @@ use std::os::unix::net::UnixStream;
 use std::io::Result;
 use std::io::prelude::*;
 use regex::Regex;
+use std::io::{Error, ErrorKind};
 
 pub fn socket_create(sockpath: &str) -> Result<UnixStream> {
     UnixStream::connect(sockpath)
@@ -47,4 +48,14 @@ pub fn socket_read(mut stream: &UnixStream) -> Result<String> {
     stream.read_exact(&mut buffer)?;
 
     Ok(String::from_utf8(buffer).unwrap())
+}
+
+pub fn socket_read_ok(stream: &UnixStream) -> Result<()> {
+    let response = socket_read(&stream)?;
+
+    if response.contains("<ok/>") {
+        Ok(())
+    } else {
+        Err(Error::new(ErrorKind::Other, "No <ok> in response"))
+    }
 }
