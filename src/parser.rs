@@ -6,5 +6,5 @@ pub fn parse_string(xmlstr: &str) -> Result<Element, String> {
 		Err(e) => return Err(e.to_string())
 	};
 
-	return Ok(root);
+	Ok(root)
 }
