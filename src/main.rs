@@ -1,5 +1,6 @@
 mod socket;
 mod parser;
+mod netconf;
 
 use clap::Parser;
 
@@ -12,6 +13,7 @@ struct Cli {
 
 fn main() {
     let args = Cli::parse();
+
     let socket_path = match args.socket_path {
         Some(socket_path) => socket_path,
         None => {
@@ -19,8 +21,6 @@ fn main() {
             return;
         }
     };
-
-    let hello_str = "<rpc xmlns=\"urn:ietf:params:xml:ns:netconf:base:1.0\" cl:username=\"debian\" xmlns:cl=\"http://clicon.org/lib\" xmlns:nc=\"urn:ietf:params:xml:ns:netconf:base:1.0\" message-id=\"42\"><get-config><source><running/></source><nc:filter nc:type=\"xpath\" nc:select=\"/\"/></get-config></rpc>";
 
     let stream = match socket::socket_create(&socket_path) {
         Ok(stream) => stream,
@@ -30,23 +30,21 @@ fn main() {
         }
     };   
 
-    if let Err(e) = socket::socket_send(&stream, hello_str) {
+    // Enable subscriptions
+    if let Err(e) = socket::socket_send(&stream, &netconf::NETCONF_SUBSCRIPTION_CREATE) {
         println!("Error: {}", e);	
     }
 
-    let response = match socket::socket_read(&stream) {
+    let response = match socket::socket_read_ok(&stream) {
         Ok(response) => response,
-        Err(_) => {
-            println!("Error reading from stream");
+        Err(e) => {
+            println!("Error reading from stream: {}", e);
             return;
         }
     };
 
-    let root = match parser::parse_string(&response) {
-        Ok(root) => root,
-        Err(_) => {
-            println!("Error parsing XML");
-            return;
-        }
-    };
+    // Eternal loop which listens for messagaes
+    loop {
+        ;
+    }
 }
