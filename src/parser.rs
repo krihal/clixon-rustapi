@@ -8,7 +8,3 @@ pub fn parse_string(xmlstr: &str) -> Result<Element, String> {
 
 	return Ok(root);
 }
-
-pub fn parse_to_string(root: &Element) -> String {
-	return root.to_string();
-}
