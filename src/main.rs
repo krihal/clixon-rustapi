@@ -2,6 +2,7 @@ mod socket;
 mod parser;
 mod netconf;
 mod modules;
+mod event;
 
 use clap::Parser;
 
@@ -12,7 +13,11 @@ struct Cli {
     socket_path: Option<String>,
 }
 
-fn main() -> ! {
+fn handler_services_commit(input: &event::Data) {
+
+}
+
+fn main() {
     let args = Cli::parse();
 
     let socket_path = match args.socket_path {
@@ -44,8 +49,12 @@ fn main() -> ! {
         }
     };
 
+    // Register events
+    let mut event_handler = event::EventHandler::new();
+    event_handler.register("*<services-commit*>*</services-commit>*", Box::new(handler_services_commit));
+
     // Eternal loop which listens for messagaes
     loop {
-        ;
+
     }
 }
