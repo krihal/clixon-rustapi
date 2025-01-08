@@ -3,6 +3,7 @@ use std::io::Result;
 use std::io::prelude::*;
 use regex::Regex;
 use std::io::{Error, ErrorKind};
+use log::{info, error, debug};
 
 pub fn socket_create(sockpath: &str) -> Result<UnixStream> {
     UnixStream::connect(sockpath)
@@ -14,7 +15,8 @@ pub fn socket_send(mut stream: &UnixStream, data: &str) -> Result<()> {
     let frame_header = format!("{}{}\n", frame_start, data.len());
     let frame = format!("{}{}{}", frame_header, data, frame_end);
     
-    println!("Sending {} bytes", data.len());
+    info!("Sending {} bytes", data.len());
+    debug!("data={}", data);
     
     stream.write_all(frame.as_bytes())?;
 
@@ -42,10 +44,12 @@ pub fn socket_read(mut stream: &UnixStream) -> Result<String> {
     // Read frame_size bytes from the stream
     let frame_size_int: usize = _frame_size.parse().unwrap();
 
-    println!("Reading {} bytes", frame_size_int);
+    info!("Reading {} bytes", frame_size_int);
 
     let mut buffer = vec![0; frame_size_int];
     stream.read_exact(&mut buffer)?;
+
+    debug!("data={}", String::from_utf8(buffer.clone()).unwrap());
 
     Ok(String::from_utf8(buffer).unwrap())
 }

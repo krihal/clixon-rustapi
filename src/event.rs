@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fmt;
 use wildmatch::WildMatch;
+use log::{info, debug, error};
 
 pub struct EventHandler<T> {
     listeners: HashMap<String, Vec<Box<dyn Fn(&T)>>>,
@@ -18,17 +19,22 @@ impl<T> EventHandler<T> {
             .entry(event.to_string())
             .or_insert(Vec::new())
             .push(callback);
+
+    	debug!("Registered new callback for \"{}\"", event);
     }
 
     pub fn unregister(&mut self, event: &str) {
         if self.listeners.contains_key(event) {
             self.listeners.remove(event);
         }
+
+		debug!("Unregistered new callback for \"{}\"", event);
     }
 
     pub fn emit(&self, event: &str, parameter: &T) {
         for (event_name, callback) in &self.listeners {
             if WildMatch::new(event_name).matches(event) {
+            	debug!("Emitting event for {}", event);
                 for cb in callback {
                     cb(parameter);
                 }
