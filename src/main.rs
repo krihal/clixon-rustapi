@@ -1,6 +1,7 @@
 mod socket;
 mod parser;
 mod netconf;
+mod modules;
 
 use clap::Parser;
 
@@ -11,7 +12,7 @@ struct Cli {
     socket_path: Option<String>,
 }
 
-fn main() {
+fn main() -> ! {
     let args = Cli::parse();
 
     let socket_path = match args.socket_path {
