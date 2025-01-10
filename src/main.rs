@@ -12,6 +12,8 @@ use log::{info, debug, error};
 struct Cli {
     #[arg(short, long, value_name = "SOCKET_PATH")]
     socket_path: Option<String>,
+    #[arg(short, long, value_name = "MODULES_PATH")]
+    modules_path: Option<String>,    
 }
 
 fn handler_services_commit(input: &event::Data) {
@@ -22,14 +24,21 @@ fn main() {
     let args = Cli::parse();
     env_logger::init();
 
-    let socket_path = match args.socket_path {
-        Some(socket_path) => socket_path,
-        None => {
-            error!("Error: socket path not provided");
-            return;
-        }
+    if args.socket_path.is_none() {
+        error!("Error: socket path not provided");
+        return;
     };
 
+    let socket_path = args.socket_path.unwrap();
+
+    if args.modules_path.is_none() {
+    	error!("Error: modules_path not provided");
+    	return;
+    };
+
+    let modules_path = args.modules_path.unwrap();
+    let path = String::from(modules_path + "/*.so");
+    let modules = modules::modules_find(&path);
     let stream = match socket::socket_create(&socket_path) {
         Ok(stream) => stream,
         Err(e) => {
@@ -55,15 +64,8 @@ fn main() {
     let mut event_handler = event::EventHandler::new();
     event_handler.register("*<services-commit*>*</services-commit>*", Box::new(handler_services_commit));
 
-    // Eternal loop which listens for messagaes
-    loop {
-    	info!("Listening for messages...");
-    	let data = match socket::socket_read(&stream) {
-    		Ok(data) => data,
-    		Err(e) => {
-    			error!("Error reading from stream: {}", e);
-    			continue;
-    		}
-    	};
+    for module in modules {
+    	println!("{}", module);
+    	let _ = modules::module_call(&module);
     }
 }
