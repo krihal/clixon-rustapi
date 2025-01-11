@@ -13,7 +13,7 @@ struct Cli {
     #[arg(short, long, value_name = "SOCKET_PATH")]
     socket_path: Option<String>,
     #[arg(short, long, value_name = "MODULES_PATH")]
-    modules_path: Option<String>,    
+    modules_path: Option<String>,
 }
 
 fn handler_services_commit(input: &event::Data) {
@@ -48,12 +48,30 @@ fn main() {
     };
 
     // Enable subscriptions
+    if let Err(e) = socket::socket_send(&stream, &netconf::NETCONF_CONTROLLER_TRANSACTION) {
+        error!("Error: {}", e);
+    }
+
+    let response = match socket::socket_read_ok(&stream) {
+        Ok(response) => {
+        	info!("Notifications enabled");
+        	response
+        },
+        Err(e) => {
+            error!("Error reading from stream: {}", e);
+            return;
+        }
+    };
+
     if let Err(e) = socket::socket_send(&stream, &netconf::NETCONF_SUBSCRIPTION_CREATE) {
         error!("Error: {}", e);
     }
 
     let response = match socket::socket_read_ok(&stream) {
-        Ok(response) => response,
+        Ok(response) => {
+        	info!("Notifications enabled");
+        	response
+        },
         Err(e) => {
             error!("Error reading from stream: {}", e);
             return;
@@ -64,8 +82,15 @@ fn main() {
     let mut event_handler = event::EventHandler::new();
     event_handler.register("*<services-commit*>*</services-commit>*", Box::new(handler_services_commit));
 
+    loop {
+    	if let Ok(response) = socket::socket_read(&stream) {
+    		println!("{}", response);
+    	}
+	}
+
+	// Example: Call modules
     for module in modules {
     	println!("{}", module);
-    	let _ = modules::module_call(&module);
+    	let _ = modules::module_call(&module, "test");
     }
 }
