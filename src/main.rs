@@ -1,11 +1,11 @@
-mod socket;
-mod parser;
-mod netconf;
-mod modules;
 mod event;
+mod modules;
+mod netconf;
+mod parser;
+mod socket;
 
 use clap::Parser;
-use log::{info, debug, error};
+use log::{debug, error, info};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -16,9 +16,7 @@ struct Cli {
     modules_path: Option<String>,
 }
 
-fn handler_services_commit(input: &event::Data) {
-
-}
+fn handler_services_commit(input: &event::Data) {}
 
 fn main() {
     let args = Cli::parse();
@@ -32,8 +30,8 @@ fn main() {
     let socket_path = args.socket_path.unwrap();
 
     if args.modules_path.is_none() {
-    	error!("Error: modules_path not provided");
-    	return;
+        error!("Error: modules_path not provided");
+        return;
     };
 
     let modules_path = args.modules_path.unwrap();
@@ -54,9 +52,9 @@ fn main() {
 
     let response = match socket::socket_read_ok(&stream) {
         Ok(response) => {
-        	info!("Notifications enabled");
-        	response
-        },
+            info!("Notifications enabled");
+            response
+        }
         Err(e) => {
             error!("Error reading from stream: {}", e);
             return;
@@ -69,9 +67,9 @@ fn main() {
 
     let response = match socket::socket_read_ok(&stream) {
         Ok(response) => {
-        	info!("Notifications enabled");
-        	response
-        },
+            info!("Notifications enabled");
+            response
+        }
         Err(e) => {
             error!("Error reading from stream: {}", e);
             return;
@@ -80,17 +78,20 @@ fn main() {
 
     // Register events
     let mut event_handler = event::EventHandler::new();
-    event_handler.register("*<services-commit*>*</services-commit>*", Box::new(handler_services_commit));
+    event_handler.register(
+        "*<services-commit*>*</services-commit>*",
+        Box::new(handler_services_commit),
+    );
 
     loop {
-    	if let Ok(response) = socket::socket_read(&stream) {
-    		println!("{}", response);
-    	}
-	}
+        if let Ok(response) = socket::socket_read(&stream) {
+            println!("{}", response);
+        }
+    }
 
-	// Example: Call modules
+    // Example: Call modules
     for module in modules {
-    	println!("{}", module);
-    	let _ = modules::module_call(&module, "test");
+        println!("{}", module);
+        let _ = modules::module_call(&module, "test");
     }
 }
